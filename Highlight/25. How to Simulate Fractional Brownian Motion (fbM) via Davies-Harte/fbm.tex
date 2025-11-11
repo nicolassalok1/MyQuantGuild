@@ -1,0 +1,115 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsfonts,mathtools,bm}
+\usepackage[a4paper,margin=2.2cm]{geometry}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black}
+\numberwithin{equation}{section}
+\allowdisplaybreaks
+
+% ---------- Macros ----------
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\Var}{\mathrm{Var}}
+\newcommand{\Cov}{\mathrm{Cov}}
+\newcommand{\1}{\mathbf{1}}
+
+\begin{document}
+\section*{Simulation du mouvement brownien fractionnaire — Méthode de Davies–Harte}
+
+\textbf{I. Discrétisation du fBm}
+
+On considère un Brownien fractionnaire sur la période $T$, avec un pas $\Delta t = \frac{T}{N}$.
+On définit :
+\[
+t_k = k \, \Delta t, \quad k = 0, \dots, N
+\]
+et
+\[
+B_H(t_k) = \sum_{j=0}^k \xi_j,
+\]
+où $\xi_j$ est un bruit gaussien corrélé (fractional Gaussian noise).
+
+\vspace{1em}
+
+\textbf{II. Covariance du bruit fractionnaire}
+
+On note :
+\[
+\gamma(k) = \Cov(X_t, X_{t+k}) = \E[X_t X_{t+k}] 
+= \tfrac{1}{2}\left(|k+1|^{2H} + |k-1|^{2H} - 2|k|^{2H}\right)
+\]
+
+On construit le vecteur :
+\[
+c = [\gamma(0), \gamma(1), \dots, \gamma(N), \gamma(N-1), \dots, \gamma(1)].
+\]
+
+\vspace{1em}
+
+\textbf{III. Diagonalisation par FFT}
+
+On calcule :
+\[
+\Lambda = \mathrm{FFT}(c)
+\]
+et on pose la matrice de Fourier :
+\[
+F_{jk} = e^{-2i\pi jk / M}, \quad M = 2N
+\]
+
+Alors :
+\[
+C = F^{-1} \, \mathrm{diag}(\Lambda) \, F
+\]
+
+On génère le vecteur aléatoire :
+\[
+Z = (Z_0, Z_1, \dots, Z_{2N-1}) \in \C^{2N}, \quad Z_k \sim \N(0,1) + i \N(0,1)
+\]
+avec la symétrie $Z_{2N-k} = \overline{Z_k}$ pour assurer la réalité du signal.
+
+\vspace{1em}
+
+\textbf{IV. Génération du bruit fractionnaire}
+
+On définit :
+\[
+Y = F^{-1} \left( \sqrt{\Lambda} \odot Z \right),
+\]
+puis on garde la partie réelle :
+\[
+(X_0, X_1, \dots, X_{N-1}) = \Re(Y_0, Y_1, \dots, Y_{N-1})
+\]
+qui correspond au \emph{fractional Gaussian noise}.
+
+\vspace{1em}
+
+\textbf{V. Reconstruction du fBm}
+
+On cumule :
+\[
+B_H(t_k) = \sum_{j=0}^{k-1} X_j,
+\]
+avec $B_H(0)=0$.  
+La variance est correctement ajustée en multipliant par $(\Delta t)^H$ :
+\[
+B_H(t_k) = (\Delta t)^H \sum_{j=0}^{k-1} X_j.
+\]
+
+\vspace{1em}
+
+\textbf{Résumé}
+\begin{itemize}
+    \item On construit la covariance théorique $\gamma(k)$ du bruit fractionnaire.
+    \item On applique une FFT sur le vecteur $c$ étendu.
+    \item On génère un vecteur gaussien complexe symétrique.
+    \item On multiplie par $\sqrt{\Lambda}$ et on applique l’IFFT.
+    \item On récupère la partie réelle pour obtenir le bruit.
+    \item On cumule pour obtenir le mouvement brownien fractionnaire $B_H(t)$.
+\end{itemize}
+
+\end{document}
